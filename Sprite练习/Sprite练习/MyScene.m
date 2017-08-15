@@ -16,6 +16,8 @@
 /** */
 @property (strong, nonatomic) SKAction *projectileSoundEffect;
 @property (nonatomic, strong) AVAudioPlayer *bgmPlayer;
+/** 记录飞出屏幕的怪物的数量*/
+@property (assign, nonatomic) int outScreenMonsters;
 
 /** 摧毁怪物的数量*/
 @property (assign, nonatomic) int monstersDestroyed;
@@ -69,6 +71,17 @@
         pause.position = CGPointMake(size.width-40, size.height-40);
         [self addChild:pause];
         pause.name = @"pause";
+        // 添加血槽
+        CGFloat posiX = size.height/2+20;
+        CGFloat posiY = size.height-13.5;
+        SKSpriteNode * lifeBG = [SKSpriteNode spriteNodeWithColor:[SKColor yellowColor] size:CGSizeMake(size.height+2, 7)];
+        lifeBG.position = CGPointMake(posiX, posiY);
+        [self addChild:lifeBG];
+        
+        SKSpriteNode * life = [SKSpriteNode spriteNodeWithColor:[SKColor redColor] size:CGSizeMake(size.height, 5)];
+        life.name = @"life";
+        life.position = lifeBG.position;
+        [self addChild:life];
     }
     return self;
 }
@@ -95,8 +108,18 @@
     SKAction * actionDone = [SKAction runBlock:^{
         [monster removeFromParent];
         [self.monsters removeObject:monster];
-        //
-        [self changeToResultSceneWithWon:NO];
+        self.outScreenMonsters ++;
+        // 修改生命值
+        SKSpriteNode * life = (SKSpriteNode *)[self childNodeWithName:@"life"];
+        life.size = CGSizeMake(self.size.height/5.0*(5-self.outScreenMonsters), 5);
+        CGPoint lifePosition = life.position;
+        lifePosition.x -= self.size.height/5.0/2;
+        life.position = lifePosition;
+        // 超过5个之后就切换场景
+        if (self.outScreenMonsters>=5) {
+            
+            [self changeToResultSceneWithWon:NO];
+        }
     }];
     [monster runAction:[SKAction sequence:@[actionMove, actionDone]]];
 }
